@@ -15,7 +15,8 @@ pipeline{
         }
         stage('Checkout from Git'){
             steps{
-                git branch: 'main', url: 'https://github.com/Aj7Ay/Netflix-clone.git'
+                // Pulling from YOUR GitHub repository now!
+                git branch: 'main', url: 'https://github.com/shahabdullah04/Netflix-DevSecOps.git'
             }
         }
         stage("Sonarqube Analysis "){
@@ -29,7 +30,8 @@ pipeline{
         stage("quality gate"){
            steps {
                 script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token' 
+                    // Matched the lowercase ID we created earlier
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
                 }
             } 
         }
@@ -52,24 +54,29 @@ pipeline{
         stage("Docker Build & Push"){
             steps{
                 script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
-                       sh "docker build --build-arg TMDB_V3_API_KEY=<yourtmdbapikey> -t netflix ."
-                       sh "docker tag netflix nasi101/netflix:latest "
-                       sh "docker push nasi101/netflix:latest "
+                   withDockerRegistry(credentialsId: 'docker'){   
+                       // MUST REPLACE YOUR TMDB API KEY BELOW!
+                       sh "docker build --build-arg TMDB_V3_API_KEY=<52cfd7ffd0eefc40babc55307f4e33f8> -t netflix ."
+                       sh "docker tag netflix shahabdullah04/netflix:latest"
+                       sh "docker push shahabdullah04/netflix:latest"
                     }
                 }
             }
         }
         stage("TRIVY"){
             steps{
-                sh "trivy image nasi101/netflix:latest > trivyimage.txt" 
+                sh "trivy image shahabdullah04/netflix:latest > trivyimage.txt" 
             }
         }
         stage('Deploy to container'){
             steps{
-                sh 'docker run -d -p 8081:80 nasi101/netflix:latest'
+                sh 'docker run -d -p 8081:80 shahabdullah04/netflix:latest'
             }
         }
+        
+        // --- TEMPORARILY DISABLED FOR PHASE 3 ---
+        // We will uncomment this in Phase 6 when we build the EKS Cluster
+        /*
         stage('Deploy to kubernets'){
             steps{
                 script{
@@ -82,17 +89,6 @@ pipeline{
                 }
             }
         }
-
-    }
-    post {
-     always {
-        emailext attachLog: true,
-            subject: "'${currentBuild.result}'",
-            body: "Project: ${env.JOB_NAME}<br/>" +
-                "Build Number: ${env.BUILD_NUMBER}<br/>" +
-                "URL: ${env.BUILD_URL}<br/>",
-            to: 'iambatmanthegoat@gmail.com',                                #change mail here
-            attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
-        }
+        */
     }
 }
