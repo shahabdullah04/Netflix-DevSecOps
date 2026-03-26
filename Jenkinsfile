@@ -17,11 +17,9 @@ pipeline{
         }
         stage("Sonarqube Analysis "){
             steps{
-                script {
-                    def scannerHome = tool 'sonar-scanner'
-                    withSonarQubeEnv('sonar-server') {
-                        sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectName=Netflix -Dsonar.projectKey=Netflix"
-                    }
+                withSonarQubeEnv('sonar-server') {
+                    // Bypassing the buggy variable and using the absolute file path!
+                    sh "/var/lib/jenkins/tools/hudson.plugins.sonar.SonarRunnerInstallation/sonar-scanner/bin/sonar-scanner -Dsonar.projectName=Netflix -Dsonar.projectKey=Netflix"
                 }
             }
         }
@@ -52,6 +50,7 @@ pipeline{
             steps{
                 script{
                    withDockerRegistry(credentialsId: 'docker'){   
+                       // REPLACE YOUR API KEY BELOW!
                        sh "docker build --build-arg TMDB_V3_API_KEY=52cfd7ffd0eefc40babc55307f4e33f8 -t netflix ."
                        sh "docker tag netflix shahabdullah04/netflix:latest"
                        sh "docker push shahabdullah04/netflix:latest"
